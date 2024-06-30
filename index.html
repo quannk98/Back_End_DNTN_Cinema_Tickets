@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Socket.IO Client Example</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.1/socket.io.min.js"></script>
+</head>
+<body>
+  <h1>Socket Client</h1>
+
+  <div id="notifications">H1</div>
+
+  <script>
+    const socket = io('http://localhost:3000'); // Replace with your server URL
+
+    socket.on('connect', () => {
+      console.log('Connected to Socket.IO server');
+    });
+
+    socket.on('notification', (data) => { // Listen for 'notification' event
+    console.log('Received notification:', data);
+      const notificationElement = document.createElement('p');
+      notificationElement.textContent = data; // Display received data
+      document.getElementById('notifications').appendChild(notificationElement);
+    });
+  </script>
+</body>
+</html>
