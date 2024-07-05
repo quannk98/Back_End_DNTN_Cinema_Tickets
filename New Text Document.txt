@@ -1,3 +1,10 @@
 tk: mdticket1990@gmail.com  
 mk: datvephim1@
 mk: hqjnullkqeqnxzyg
+git checkout -b actor 
+
+git fetch
+
+git merge origin/main
+
+
