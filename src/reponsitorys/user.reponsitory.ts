@@ -46,8 +46,7 @@ export class UserRepository {
       return createdUSer;
     } catch (error) {
       return {
-        status: 'error',
-        data: error.response,
+        data: error.message,
       };
     }
   }
