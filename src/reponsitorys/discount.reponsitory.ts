@@ -7,7 +7,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { DiscountDto } from 'src/modules/discount/dto/discount.dto';
 import { Discount } from 'src/schemas/discount.schema';
-import { Notification } from 'src/schemas/notification.schema';
+
 
 @Injectable()
 export class DiscountReponsitory {
@@ -55,7 +55,7 @@ export class DiscountReponsitory {
       .populate([{ path: 'cinema', select: 'name address hotline' }]);
     if (!getDiscount) {
       return {
-        status: 'error',
+      
         message: 'Get Failed',
       };
     }
@@ -68,7 +68,7 @@ export class DiscountReponsitory {
       .populate([{ path: 'cinema', select: 'name address hotline' }]);
     if (!getDiscount) {
       return {
-        status: 'error',
+        
         message: 'Get Failed',
       };
     }
@@ -91,7 +91,7 @@ export class DiscountReponsitory {
       );
       if (!update) {
         return {
-          status: 'error',
+         
           message: 'Update Failed',
         };
       }
@@ -110,7 +110,7 @@ export class DiscountReponsitory {
       );
       if (!update) {
         return {
-          status: 'error',
+        
           message: 'Update Failed',
         };
       }
@@ -129,7 +129,7 @@ export class DiscountReponsitory {
       );
       if (!update) {
         return {
-          status: 'error',
+         
           message: 'Update Failed',
         };
       }
@@ -144,7 +144,7 @@ export class DiscountReponsitory {
     );
     if (!update) {
       return {
-        status: 'error',
+      
         message: 'Update Failed',
       };
     }
@@ -156,7 +156,7 @@ export class DiscountReponsitory {
       await this.discountModel.findByIdAndDelete(discountId);
     if (!deletediscount) {
       return {
-        status: 'error',
+      
         message: 'Delete Failed',
       };
     }
