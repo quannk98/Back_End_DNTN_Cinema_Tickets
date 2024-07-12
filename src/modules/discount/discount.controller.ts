@@ -49,12 +49,15 @@ export class DiscountController {
     @UploadedFile() image: Express.Multer.File,
   ): Promise<any> {
     try {
+      if (image === undefined) {
+        return 'Found Image';
+      }
       const dataCreate = {
         ...discountDto,
+        cinema: JSON.parse(discountDto.cinema),
         code: generateRandomCode(6),
         image: image.filename,
       };
-      console.log('a', dataCreate);
       const create = await this.discountService.createDiscount(dataCreate);
       return {
         create,
@@ -64,13 +67,36 @@ export class DiscountController {
     }
   }
 
-  @UseGuards(AuthGuard)
-  @Get('')
-  async getAllUser(): Promise<any> {
-    const getall = await this.discountService.getAll();
+ 
+ 
+
+  @UseGuards(AuthAdminGuard)
+  @Get('type')
+  async getType(@Query('type') type: any): Promise<any> {
+    const getDiscount = await this.discountService.getdiscountbytype(type);
     return {
-      getall,
+      getDiscount,
     };
+  }
+
+  @UseGuards(AuthAdminGuard)
+  @Put('status/:id')
+  async UpdateStatusDiscount(@Param('id') id: any): Promise<any> {
+    const update = await this.discountService.updateDiscountStatus(id);
+    return update;
+  }
+
+  @UseGuards(AuthGuard)
+  @Get('check/code')
+  async checkCodeDiscount(
+    @Query('code') code: any,
+    @Query('cinemaId') cinemaId: any,
+  ): Promise<any> {
+    const discount = await this.discountService.checkCodeDiscount(
+      code,
+      cinemaId,
+    );
+    return discount;
   }
 
   @UseGuards(AuthGuard)
@@ -81,15 +107,15 @@ export class DiscountController {
       getDiscount,
     };
   }
-
-  @UseGuards(AuthAdminGuard)
-  @Get('type')
-  async getType(@Query('type') type: any): Promise<any> {
-    const getDiscount = await this.discountService.getdiscountbytype(type);
+  @UseGuards(AuthGuard)
+  @Get('')
+  async getAllUser(): Promise<any> {
+    const getall = await this.discountService.getAll();
     return {
-      getDiscount,
+      getall,
     };
   }
+
 
   @UseGuards(AuthAdminGuard)
   @Put(':id')

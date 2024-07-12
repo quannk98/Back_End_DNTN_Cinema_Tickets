@@ -34,3 +34,7 @@ export enum ENotificationStatus {
   ACTIVE = 'active',
   INACTIVE = 'inactive',
 }
+export enum EDiscountStatus{
+  ACTIVE = 'active',
+  INACTIVE = 'inactive',
+}

@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose from 'mongoose';
+import { EDiscountStatus } from 'src/common/enums/user.enum';
 
 
 @Schema()
@@ -11,7 +12,7 @@ export class Discount {
   readonly image: string;
 
   @Prop()
-  readonly percent: string;
+  readonly percent: number;
 
   @Prop()
   readonly code: string;
@@ -27,5 +28,8 @@ export class Discount {
 
   @Prop({ type: [mongoose.Schema.Types.ObjectId], ref: 'Cinema' })
   readonly cinema: mongoose.Types.ObjectId[];
+
+  @Prop({default:EDiscountStatus.INACTIVE})
+  readonly status: EDiscountStatus
 }
 export const DiscountSchema = SchemaFactory.createForClass(Discount)

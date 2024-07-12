@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
+import { EDiscountStatus } from 'src/common/enums/user.enum';
 import { DiscountDto } from 'src/modules/discount/dto/discount.dto';
 import { Discount } from 'src/schemas/discount.schema';
 
@@ -37,8 +38,10 @@ export class DiscountReponsitory {
       };
       const createnotification = new this.notificationModel(datanotification);
       createnotification.save();
+      creatediscount.save()
       return creatediscount;
     } catch (error) {
+      console.log("error",error)
       return error.message;
     }
   }
@@ -55,7 +58,7 @@ export class DiscountReponsitory {
       .populate([{ path: 'cinema', select: 'name address hotline' }]);
     if (!getDiscount) {
       return {
-      
+        status: 'error',
         message: 'Get Failed',
       };
     }
@@ -68,11 +71,40 @@ export class DiscountReponsitory {
       .populate([{ path: 'cinema', select: 'name address hotline' }]);
     if (!getDiscount) {
       return {
-        
+        status: 'error',
         message: 'Get Failed',
       };
     }
     return getDiscount;
+  }
+
+  async checkCodeDiscount(code:any,cinemaId:any): Promise<any>{
+    const discount = await (await this.discountModel.findOne({code:code}))
+    if(!discount || discount.status != EDiscountStatus.ACTIVE ){
+      return 'Your Code Does Not Exist'
+    }
+    const isCinemaValid = discount.cinema.some(cinemaObjectId => cinemaObjectId.equals(cinemaId));
+    if(!isCinemaValid){
+      return 'Your Code Not Applicable At This Cinema'
+    }
+    
+    return discount
+
+  }
+
+  async UpdateStatusDiscount(discountId: any): Promise<any> {
+    const discount = await this.discountModel.findById(discountId);
+    if (discount.status === EDiscountStatus.INACTIVE) {
+      const update = await this.discountModel.findByIdAndUpdate(discountId, {
+        status: EDiscountStatus.ACTIVE,
+      });
+      return update;
+    } else {
+      const update = await this.discountModel.findByIdAndUpdate(discountId, {
+        status: EDiscountStatus.INACTIVE,
+      });
+      return update;
+    }
   }
 
   async updateDiscount(discountId: any, dataUpdate: any): Promise<any> {
@@ -91,7 +123,7 @@ export class DiscountReponsitory {
       );
       if (!update) {
         return {
-         
+          status: 'error',
           message: 'Update Failed',
         };
       }
@@ -110,7 +142,7 @@ export class DiscountReponsitory {
       );
       if (!update) {
         return {
-        
+          status: 'error',
           message: 'Update Failed',
         };
       }
@@ -129,7 +161,7 @@ export class DiscountReponsitory {
       );
       if (!update) {
         return {
-         
+          status: 'error',
           message: 'Update Failed',
         };
       }
@@ -144,7 +176,7 @@ export class DiscountReponsitory {
     );
     if (!update) {
       return {
-      
+        status: 'error',
         message: 'Update Failed',
       };
     }
@@ -156,7 +188,7 @@ export class DiscountReponsitory {
       await this.discountModel.findByIdAndDelete(discountId);
     if (!deletediscount) {
       return {
-      
+        status: 'error',
         message: 'Delete Failed',
       };
     }
