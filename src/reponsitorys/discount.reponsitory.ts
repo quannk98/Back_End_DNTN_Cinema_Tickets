@@ -24,6 +24,12 @@ export class DiscountReponsitory {
       });
       if (existsdiscount)
         throw new ConflictException('Discount already exists');
+      if (
+        discountDto.dayStart === undefined ||
+        discountDto.dayEnd === undefined
+      ) {
+        return 'Missing Date';
+      }
       const dataCreate = {
         ...discountDto,
         dayStart: new Date(discountDto.dayStart),
@@ -31,6 +37,7 @@ export class DiscountReponsitory {
       };
       const creatediscount = new this.discountModel(dataCreate);
       if (!creatediscount) throw new UnauthorizedException('Create Fail');
+
       const datanotification = {
         name: discountDto.name,
         dayStart: discountDto.dayStart,
@@ -38,10 +45,10 @@ export class DiscountReponsitory {
       };
       const createnotification = new this.notificationModel(datanotification);
       createnotification.save();
-      creatediscount.save()
+      creatediscount.save();
       return creatediscount;
     } catch (error) {
-      console.log("error",error)
+      console.log('error', error);
       return error.message;
     }
   }
@@ -57,10 +64,7 @@ export class DiscountReponsitory {
       .findById(discountId)
       .populate([{ path: 'cinema', select: 'name address hotline' }]);
     if (!getDiscount) {
-      return {
-        status: 'error',
-        message: 'Get Failed',
-      };
+      return 'Get Failed';
     }
     return getDiscount;
   }
@@ -70,26 +74,29 @@ export class DiscountReponsitory {
       .find({ type: type })
       .populate([{ path: 'cinema', select: 'name address hotline' }]);
     if (!getDiscount) {
-      return {
-        status: 'error',
-        message: 'Get Failed',
-      };
+      return 'Get Failed';
     }
     return getDiscount;
   }
 
-  async checkCodeDiscount(code:any,cinemaId:any): Promise<any>{
-    const discount = await (await this.discountModel.findOne({code:code}))
-    if(!discount || discount.status != EDiscountStatus.ACTIVE ){
-      return 'Your Code Does Not Exist'
+  async checkCodeDiscount(code: any, cinemaId: any): Promise<any> {
+    const date = new Date(Date.now());
+    const discount = await await this.discountModel.findOne({
+      code: code,
+      dayEnd: { $gte: date },
+      dayStart: { $lte: date },
+    });
+    if (!discount || discount.status != EDiscountStatus.ACTIVE) {
+      return 'Your Code Does Not Exist';
     }
-    const isCinemaValid = discount.cinema.some(cinemaObjectId => cinemaObjectId.equals(cinemaId));
-    if(!isCinemaValid){
-      return 'Your Code Not Applicable At This Cinema'
+    const isCinemaValid = discount.cinema.some((cinemaObjectId) =>
+      cinemaObjectId.equals(cinemaId),
+    );
+    if (!isCinemaValid) {
+      return 'Your Code Not Applicable At This Cinema';
     }
-    
-    return discount
 
+    return discount;
   }
 
   async UpdateStatusDiscount(discountId: any): Promise<any> {
@@ -122,10 +129,7 @@ export class DiscountReponsitory {
         },
       );
       if (!update) {
-        return {
-          status: 'error',
-          message: 'Update Failed',
-        };
+        return 'Update Failed';
       }
       return update;
     } else if (dataUpdate.dayStart != undefined) {
@@ -141,10 +145,7 @@ export class DiscountReponsitory {
         },
       );
       if (!update) {
-        return {
-          status: 'error',
-          message: 'Update Failed',
-        };
+        return 'Update Failed';
       }
       return update;
     } else if (dataUpdate.dayEnd != undefined) {
@@ -160,10 +161,7 @@ export class DiscountReponsitory {
         },
       );
       if (!update) {
-        return {
-          status: 'error',
-          message: 'Update Failed',
-        };
+        return 'Update Failed';
       }
       return update;
     }
@@ -175,10 +173,7 @@ export class DiscountReponsitory {
       },
     );
     if (!update) {
-      return {
-        status: 'error',
-        message: 'Update Failed',
-      };
+      return 'Update Failed';
     }
     return update;
   }
@@ -187,10 +182,7 @@ export class DiscountReponsitory {
     const deletediscount =
       await this.discountModel.findByIdAndDelete(discountId);
     if (!deletediscount) {
-      return {
-        status: 'error',
-        message: 'Delete Failed',
-      };
+      return 'Delete Failed';
     }
     return deletediscount;
   }
