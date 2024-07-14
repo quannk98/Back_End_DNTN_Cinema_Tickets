@@ -52,6 +52,9 @@ export class DiscountController {
       if (image === undefined) {
         return 'Found Image';
       }
+      if(discountDto.cinema === undefined){
+        return 'Error Not Cinema'
+      }
       const dataCreate = {
         ...discountDto,
         cinema: JSON.parse(discountDto.cinema),
