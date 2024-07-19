@@ -8,7 +8,7 @@ import {
   Put,
   UseGuards,
 } from '@nestjs/common';
-
+import { MongooseModule } from '@nestjs/mongoose';
 import { AuthAdminGuard } from '../auth/dto/admin.guard';
 import { ShowtimeService } from './showtime.service';
 import { ShowtimeDto } from './dto/showtime.dto';
