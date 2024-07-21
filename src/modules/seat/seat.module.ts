@@ -4,6 +4,7 @@ import { SeatReponsitory } from 'src/repositories/seat.reponsitory';
 import { Seat, SeatSchema } from 'src/schemas/seat.schema';
 import { SeatService } from './seat.srevice';
 import { SeatController } from './seat.controller';
+import { SeatDto } from './dto/seat.dto';
 
 @Module({
   imports: [
