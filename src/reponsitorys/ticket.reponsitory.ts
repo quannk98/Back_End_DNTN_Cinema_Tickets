@@ -61,16 +61,26 @@ export class TicketReponsitory {
           time: time._id,
           status: ESeatStatus.WAITING,
         };
-        const exists = await this.seatstatusModel.findOne({
+        const existsAvailable = await this.seatstatusModel.findOne({
           seat: seatId,
           room: room._id,
           cinema: cinema._id,
           day: showtime._id,
           date: new Date(showtime.date),
           time: time._id,
+          status: ESeatStatus.AVAILABLE,
+        });
+        const existsWaitting = await this.seatstatusModel.findOne({
+          seat: seatId,
+          room: room._id,
+          cinema: cinema._id,
+          day: showtime._id,
+          date: new Date(showtime.date),
+          time: time._id,
+          status: ESeatStatus.AVAILABLE,
         });
 
-        if (!exists) {
+        if (!existsAvailable && !existsWaitting) {
           seatStatusPromises.push(
             await new this.seatstatusModel(seatStatusCreate).save(),
           );
@@ -86,9 +96,9 @@ export class TicketReponsitory {
             };
             await this.notificationGateway.StatusSeat(data);
           }
-        } else {
+        } else if (existsAvailable && !existsWaitting) {
           await this.seatstatusModel.findByIdAndUpdate(
-            exists._id,
+            existsAvailable._id,
             {
               status: ESeatStatus.WAITING,
             },
@@ -107,6 +117,8 @@ export class TicketReponsitory {
             };
             await this.notificationGateway.StatusSeat(data);
           }
+        } else if (!existsAvailable && existsWaitting) {
+          return 'Tick already exists';
         }
       }
       const newTicket = new this.ticketModel(dataCreate);
@@ -118,43 +130,90 @@ export class TicketReponsitory {
     }
   }
 
-  async getAll(): Promise<any> {
-    const getAll: any = await this.ticketModel.find({}).populate([
-      {
-        path: 'discount',
-        select: 'name image percent code type cinema',
-      },
-      {
-        path: 'movie',
-        select: 'name duration image genre',
-        populate: [{ path: 'genre', select: 'name image' }],
-      },
-      {
-        path: 'room',
-        select: 'name',
-      },
-      {
-        path: 'seat',
-        select: 'name price status',
-      },
-      {
-        path: 'showdate',
-        select: 'date',
-      },
-      {
-        path: 'time',
-        select: 'time',
-      },
-      { path: 'user', select: 'name email number_phone image' },
-      {
-        path: 'food.foodId',
-        select: 'name price image',
-        model: 'Food',
-      },
-      { path: 'cinema', select: 'name address' },
-    ]);
+  async getAllTicketForAdmin(page: number): Promise<any> {
+    const pageSize = 10;
+    const skip = (page - 1) * pageSize;
+    const getAll: any = await this.ticketModel
+      .find({})
+      .populate([
+        {
+          path: 'discount',
+          select: 'name image percent code type cinema',
+        },
+        {
+          path: 'movie',
+          select: 'name duration image genre',
+          populate: [{ path: 'genre', select: 'name image' }],
+        },
+        {
+          path: 'room',
+          select: 'name',
+        },
+        {
+          path: 'seat',
+          select: 'name price status',
+        },
+        {
+          path: 'showdate',
+          select: 'date',
+        },
+        {
+          path: 'time',
+          select: 'time',
+        },
+        { path: 'user', select: 'name email number_phone image' },
+        {
+          path: 'food.foodId',
+          select: 'name price image',
+          model: 'Food',
+        },
+        { path: 'cinema', select: 'name address' },
+      ])
+      .skip(skip)
+      .limit(pageSize);
     return getAll;
   }
+
+  // async getAllTicketForUser(): Promise<any> {
+  //   const getAll: any = await this.ticketModel
+  //     .find({})
+  //     .populate([
+  //       {
+  //         path: 'discount',
+  //         select: 'name image percent code type cinema',
+  //       },
+  //       {
+  //         path: 'movie',
+  //         select: 'name duration image genre',
+  //         populate: [{ path: 'genre', select: 'name image' }],
+  //       },
+  //       {
+  //         path: 'room',
+  //         select: 'name',
+  //       },
+  //       {
+  //         path: 'seat',
+  //         select: 'name price status',
+  //       },
+  //       {
+  //         path: 'showdate',
+  //         select: 'date',
+  //       },
+  //       {
+  //         path: 'time',
+  //         select: 'time',
+  //       },
+  //       { path: 'user', select: 'name email number_phone image' },
+  //       {
+  //         path: 'food.foodId',
+  //         select: 'name price image',
+  //         model: 'Food',
+  //       },
+  //       { path: 'cinema', select: 'name address' },
+  //     ])
+      
+  //   return getAll;
+  // }
   async getTicket(ticketId: any): Promise<any> {
     try {
       const getTicket: any = await this.ticketModel
@@ -204,7 +263,9 @@ export class TicketReponsitory {
     }
   }
 
-  async getTicketByUser(userId: any): Promise<any> {
+  async getTicketByUserForAdmin(userId: any, page: number): Promise<any> {
+    const pageSize = 10;
+    const skip = (page - 1) * pageSize;
     const getTicket: any = await this.ticketModel
       .find({ user: userId })
       .populate([
@@ -240,7 +301,53 @@ export class TicketReponsitory {
           model: 'Food',
         },
         { path: 'cinema', select: 'name address' },
-      ]);
+      ])
+      .skip(skip)
+      .limit(pageSize);
+    if (!getTicket) {
+      return 'Get Failed';
+    }
+    return getTicket;
+  }
+
+  async getTicketByUserForUser(userId: any): Promise<any> {
+   
+    const getTicket: any = await this.ticketModel
+      .find({ user: userId })
+      .populate([
+        {
+          path: 'discount',
+          select: 'name percent code type cinema',
+        },
+        {
+          path: 'movie',
+          select: 'name duration image genre',
+          populate: [{ path: 'genre', select: 'name image' }],
+        },
+        {
+          path: 'room',
+          select: 'name',
+        },
+        {
+          path: 'seat',
+          select: 'name price status',
+        },
+        {
+          path: 'showdate',
+          select: 'date',
+        },
+        {
+          path: 'time',
+          select: 'time',
+        },
+        { path: 'user', select: 'name email number_phone image' },
+        {
+          path: 'food.foodId',
+          select: 'name price image',
+          model: 'Food',
+        },
+        { path: 'cinema', select: 'name address' },
+      ])
     if (!getTicket) {
       return 'Get Failed';
     }
@@ -285,16 +392,12 @@ export class TicketReponsitory {
   }
 
   async getRevenueByCMD(
-    // cinemaId: any,
     movieId: any,
     dayStart: string,
     dayEnd: string,
   ): Promise<any> {
     let filter: any = { status: { $ne: ETicketStatus.INACTIVE } };
 
-    // if (cinemaId) {
-    //   filter.cinema = new mongoose.Types.ObjectId(cinemaId);
-    // }
     if (movieId) {
       filter.movie = new mongoose.Types.ObjectId(movieId);
     }
@@ -305,38 +408,6 @@ export class TicketReponsitory {
       };
     }
 
-    // const reportData = await this.ticketModel.aggregate([
-    //   { $match: filter },
-    //   {
-    //     $lookup: {
-    //       from: 'movies',
-    //       localField: 'movie',
-    //       foreignField: '_id',
-    //       as: 'movieData',
-    //     },
-    //   },
-    //   {
-    //     $lookup: {
-    //       from: 'cinemas',
-    //       localField: 'cinema',
-    //       foreignField: '_id',
-    //       as: 'cinemaData',
-    //     },
-    //   },
-    //   {
-    //     $group: {
-    //       _id: null,
-    //       totalRevenue: { $sum: '$total' },
-    //     },
-    //   },
-    //   {
-    //     $project: {
-    //       totalRevenue: 1,
-    //     },
-    //   },
-    // ]);
-
-    // return reportData;
     const reportData = await this.ticketModel.aggregate([
       { $match: filter },
       {
@@ -363,54 +434,63 @@ export class TicketReponsitory {
           },
           totalRevenue: { $sum: '$total' },
           ticketCount: { $sum: 1 },
+          movieName: { $first: '$movieData.name' },
+          cinemaName: { $first: '$cinemaData.name' },
         },
       },
       {
         $project: {
           _id: 0,
-          cinema: '$_id.cinema',
-          movie: '$_id.movie',
+          // cinema: '$_id.cinema',
+          // movie: '$_id.movie',
           totalRevenue: 1,
           ticketCount: 1,
+          movieName: 1,
+          cinemaName: 1,
         },
       },
     ]);
 
     return reportData;
   }
-  async getMovieRevenue(): Promise<any> {
-    const reportData = await this.ticketModel.aggregate([
-      {
-        $match: { status: { $ne: ETicketStatus.INACTIVE } }, // Filter active tickets
-      },
-      {
-        $lookup: {
-          from: 'movies', // Join with 'movies' collection
-          localField: 'movie',
-          foreignField: '_id',
-          as: 'movieData',
+  async getMovieRevenue(page: number): Promise<any> {
+    const pageSize = 10;
+    const skip = (page - 1) * pageSize;
+    const reportData = await this.ticketModel
+      .aggregate([
+        {
+          $match: { status: { $ne: ETicketStatus.INACTIVE } }, // Filter active tickets
         },
-      },
-      {
-        $group: {
-          _id: '$movieData._id', // Group by movie ID
-          movie: { $first: '$movieData._id' }, // Get movie title
-          totalRevenue: { $sum: '$total' }, // Sum revenue for each movie
-          count: { $sum: 1 }, // Count tickets for each movie
+        {
+          $lookup: {
+            from: 'movies', // Join with 'movies' collection
+            localField: 'movie',
+            foreignField: '_id',
+            as: 'movieData',
+          },
         },
-      },
-      {
-        $project: {
-          _id: 0, // Exclude unnecessary _id field
-          movie: 1,
-          totalRevenue: 1,
-          count: 1,
+        {
+          $group: {
+            _id: '$movieData._id', // Group by movie ID
+            movie: { $first: '$movieData.name' }, // Get movie title
+            totalRevenue: { $sum: '$total' }, // Sum revenue for each movie
+            count: { $sum: 1 }, // Count tickets for each movie
+          },
         },
-      },
-      {
-        $sort: { totalRevenue: -1 }, // Sort by totalRevenue in descending order (highest first)
-      },
-    ]);
+        {
+          $project: {
+            _id: 0, // Exclude unnecessary _id field
+            movie: 1,
+            totalRevenue: 1,
+            count: 1,
+          },
+        },
+        {
+          $sort: { totalRevenue: -1 }, // Sort by totalRevenue in descending order (highest first)
+        },
+      ])
+      .skip(skip)
+      .limit(pageSize);
 
     return reportData;
   }
@@ -431,14 +511,14 @@ export class TicketReponsitory {
       {
         $group: {
           _id: '$cinemaData._id', // Group by cinema ID
-          cinema: { $first: '$cinemaData._id' }, // Get cinema name
+          cinema: { $first: '$cinemaData.name' }, // Get cinema name
           totalRevenue: { $sum: '$total' }, // Sum revenue for each cinema
         },
       },
       {
         $project: {
           _id: 0, // Exclude unnecessary _id field
-          name: 1,
+          cinema: 1,
           totalRevenue: 1,
         },
       },
@@ -451,7 +531,7 @@ export class TicketReponsitory {
   }
 
   async checkTicket(): Promise<any> {
-    const time = Date.now() - 2 * 60 * 1000;
+    const time = Date.now() - 2 * 40 * 1000;
     const date = new Date(time);
 
     const inactiveTickets = await this.ticketModel.find({
